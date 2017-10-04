@@ -13,12 +13,12 @@ Usage :  ./bipsim  -b/-ba/-g <dataset> <out_directory> -m <similarity_measure>
 # unipartite (-g) => list of edges : 
 v1 v2 [weight]\n
 ...
-# bipartite (-b) => v1,v2,..,vN list of top nodes - w1,w2,...,wN :
+# bipartite (-b) => (v1,v2,..,vN) top nodes - (w1,w2,...,wN) bot nodes :
 v1 w1 w2 w3\n
 v2 w2 w3 w4\n
 v3 w1 w4\n
 ...
-# bipartite with weights (-ba) => v1,v2,..,vN list of top nodes - w1,w2,...,wN :
+# bipartite with weights (-ba) => (v1,v2,..,vN) top nodes - (w1,w2,...,wN) bot nodes :
 v1 w1 weight\n
 v1 w2 weight\n
 v1 w3 weight\n
