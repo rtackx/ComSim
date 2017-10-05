@@ -384,25 +384,15 @@ void COMP<T>::explore_simclosure(Data_Explore<T>& data_explore, set<unsigned int
 			else
 			{
 				set_node_non_simclosure.insert(data_explore.merging.begin(), it);
-				// if(it != data_explore.merging.end())
-				// 	data_explore.list_node_to_visit.insert(data_explore.list_node_to_visit.end(), data_explore.merging.begin(), it);
-				// else
-				// 	set_node_non_simclosure.insert(data_explore.merging.begin(), it);
-
-				//copy(data_explore.merging.begin(), it, back_inserter(set_node_non_simclosure));
 
 				new_com = false;
 				while(it != data_explore.merging.end())
 				{
 					new_com = true;
 					map_com[*it] = data_explore.start_com;
-					data_explore.list_community[data_explore.start_com].push_back(*it);
-
-					//cout << data_explore.list_node[*it]->id << " => " << data_explore.list_node[best[*it]]->id << " (" << mapT[*it][best[*it]] << ")" << endl;
 
 					++it;
-				}				
-				//cout << "-----------" << endl;
+				}
 
 				if(new_com)
 					data_explore.start_com++;
@@ -412,11 +402,10 @@ void COMP<T>::explore_simclosure(Data_Explore<T>& data_explore, set<unsigned int
 			}
 		}		
 	}
-	//set_node_non_simclosure.insert(data_explore.merging.begin(), data_explore.merging.end());
 }
 
 template <class T>
-void COMP<T>::aggregate(Data_Explore<T>& data_explore, set<unsigned int>& set_node_non_simclosure, set<unsigned int>& set_node_remaining)
+void COMP<T>::aggregate(set<unsigned int>& set_node_non_simclosure, set<unsigned int>& set_node_remaining)
 {
 	int best_similar_community;
 	unsigned int id_node, nb_neighbor;
@@ -435,10 +424,6 @@ void COMP<T>::aggregate(Data_Explore<T>& data_explore, set<unsigned int>& set_no
 			if(map_com.find(d.first) == map_com.end())
 				continue;
 			
-			//if(data_explore.list_node[d.first]->list_community.size() == 0)
-			//	continue;
-
-			//id_com = data_explore.list_node[d.first]->list_community.back();
 			id_com = map_com[d.first];
 			
 			if(map_neighbor_com.find(id_com) == map_neighbor_com.end())
@@ -460,83 +445,14 @@ void COMP<T>::aggregate(Data_Explore<T>& data_explore, set<unsigned int>& set_no
 			}
 		}
 
-		node_com_affectation[id_node] = best_similar_community;
+		if(best_similar_community == -1)
+			set_node_remaining.insert(id_node);
+		else
+			map_com[id_node] = best_similar_community;
 	}	
 	
-	for(auto& e : node_com_affectation)
-	{
-		if(e.second == -1)
-			set_node_remaining.insert(e.first);
-		else
-			data_explore.list_community[e.second].push_back(e.first);
-	}
-
 	set_node_non_simclosure.clear();
-
 }
-
-
-/*template <class T>
-int COMP<T>::find_community(Graph* graph, Store_Partition& store_partition, Partition*& overlapping_partition)
-{
-	Data_Explore data_explore;	
-	data_explore.graph = graph;
-	data_explore.start_com = start_num_community;
-
-	for(auto& e : mapT)
-		data_explore.list_node_to_visit.push_back(e.first);
-
-	data_explore.id_node = get_last_element(data_explore.list_node_to_visit);
-	unordered_map<unsigned int, unsigned int>* new_map_community = new unordered_map<unsigned int, unsigned int>();
-	data_explore.map_community = new_map_community;
-
-	//vector<unordered_map<unsigned int, unsigned int>*> list_map_community = explore(data_explore, 0);
-	
-	int nb_partition = 0;
-	for(auto& map_community : list_map_community)
-	{
-		Partition* partition = new Partition();
-
-		for(auto& e : *map_community)
-			partition->update(graph->list_node[e.first], e.second);
-
-		if(!store_partition.insert(partition))
-			delete partition;
-		else
-			nb_partition++;
-	}
-
-	//printf("-- Partitions found over partitions explored  : %d/%d (%f%%) --\n", nb_partition, list_map_community.size(), 100.0*nb_partition / list_map_community.size());
-
-	if(peripheric_threshold >= 0.0)
-		infer_overlapping_partition(store_partition, overlapping_partition);
-
-
-	Data_Explore data_explore;	
-	data_explore.graph = graph;
-	data_explore.start_com = start_num_community;
-
-	Partition* partition = new Partition();
-
-	for(auto& e : mapT)
-	{
-		data_explore.list_node_to_visit.push_back(e.first);
-		communityT[e.first] = 0.0;
-		communityNodes[e.first].push_back(e.first);
-		node_com[e.first] = e.first;
-	}
-
-	data_explore.id_node = get_random_element(data_explore.list_node_to_visit);
-	data_explore.map_community = new unordered_map<unsigned int, unsigned int>();
-
-	explore_comsim(data_explore);
-
-	for(auto& e : *data_explore.map_community)
-			partition->update(graph->list_node[e.first], e.second);
-	store_partition.insert(partition);
-
-	start_num_community += data_explore.start_com;
-}*/
 
 template <class T>
 set<unsigned int> COMP<T>::find_community(unordered_map<unsigned int, Node*>& list_node, Store_Partition*& store_partition)
@@ -546,46 +462,18 @@ set<unsigned int> COMP<T>::find_community(unordered_map<unsigned int, Node*>& li
 	data_explore.start_com = start_num_community;
 	
 	for(auto e : mapT)
-		data_explore.list_node_to_visit.push_back(e.first);
+	{
+		if(list_node.find(e.first) != list_node.end())
+			data_explore.list_node_to_visit.push_back(e.first);
+	}
 	random_shuffle(data_explore.list_node_to_visit.begin(), data_explore.list_node_to_visit.end());
+	
 	data_explore.id_node = data_explore.list_node_to_visit.back();
 
-	Partition* partition;
 	set<unsigned int> set_node_non_simclosure, set_node_remaining;
 	
-	explore_simclosure(data_explore, set_node_non_simclosure);
-		
-	/*for(auto& e : data_explore.list_community)
-	{
-		for(auto& d : e.second)
-		{
-			cout << list_node[d]->id << " ";
-		}
-		cout << endl;
-	}*/
-
-	/*partition = new Partition(&list_node);
-	for(auto& e : data_explore.list_community)
-	{
-		for(auto& id_node : e.second)
-		{
-			cout << "ajoute " << list_node[id_node]->id << endl;
-			partition->update(id_node, e.first);
-		}
-	}	
-	store_partition->insert(partition);*/
-	
-	aggregate(data_explore, set_node_non_simclosure, set_node_remaining);
-
-	partition = new Partition();
-	for(auto& e : data_explore.list_community)
-	{
-		for(auto& id_node : e.second)
-		{
-			partition->update(id_node, e.first);
-		}
-	}
-	store_partition->insert(partition);
+	explore_simclosure(data_explore, set_node_non_simclosure);	
+	aggregate(set_node_non_simclosure, set_node_remaining);
 
 	start_num_community += data_explore.start_com;
 

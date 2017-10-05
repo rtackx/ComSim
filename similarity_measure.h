@@ -13,7 +13,6 @@ struct Data_Explore
 	int id_node;
 	vector<unsigned int> list_node_to_visit;
 	vector<unsigned int> merging;
-	unordered_map<unsigned int, vector<unsigned int>> list_community;
 	unsigned int start_com;
 };
 
@@ -23,6 +22,8 @@ public:
 	float peripheric_threshold;
 	unsigned int depth_threshold;
 	unsigned int m;
+	unsigned int start_num_community;
+	unordered_map<unsigned int, unsigned int> map_com;
 
 	//virtual void display_modularity(unordered_map<unsigned int, Node*>&)=0;
 	virtual void similarity_projection(unordered_map<unsigned int, Node*>&, unsigned int)=0;
@@ -30,6 +31,7 @@ public:
 	virtual void save_projection(Graph*, string)=0;
 	virtual void community_isolted_nodes(set<unsigned int>, Store_Partition*&)=0;
 	virtual void clean()=0;
+	virtual void aggregate(set<unsigned int>&, set<unsigned int>&)=0;
 };
 
 template <class T>
@@ -41,7 +43,7 @@ protected:
 	void no_distance_map(unordered_map<unsigned int, Node*>&);
 	void get_distance_neighbor(Node*&, unsigned int, set<Node*, comp_node>&);
 	void explore_simclosure(Data_Explore<T>&, set<unsigned int>&);
-	void aggregate(Data_Explore<T>&, set<unsigned int>&, set<unsigned int>&);
+	void aggregate(set<unsigned int>&, set<unsigned int>&);
 
 	//vector<unordered_map<unsigned int, unsigned int>*> explore(Data_Explore<T>&, int);
 	//void explore_comsim(Data_Explore&);
@@ -49,13 +51,9 @@ protected:
 	//void save_state_partition(Graph*, unordered_map<unsigned int, unsigned int>*, int);
 	void calculate_in_out_links();
 public:	
-	//Modularity<T>* mod;
-	unsigned int start_num_community;
+	//Modularity<T>* mod;	
 	// Measure map
-	//map<unsigned int, map<unsigned int, T>> mapT;
 	unordered_map<unsigned int, unordered_map<unsigned int, T>> mapT;
-	unordered_map<unsigned int, unsigned int> map_com;
-	//unordered_map<unsigned int, vector<pair<unsigned int, T>>> mapT;
 
 	unordered_map<unsigned int, T> in_weight;
 	unordered_map<unsigned int, T> out_weight;

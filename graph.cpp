@@ -2,6 +2,7 @@
 
 Graph::Graph()
 {
+	n = 0;
 	m = 0;
 }
 
@@ -113,11 +114,12 @@ void Graph::load_graph(string bip_filename)
 	for(auto& e : list_node)
 		m += e.second->list_neighbor.size();
 	//m /= 2;
+	
 }
 
 Graph* Graph::get_subgraph(set<unsigned int> set_node_remaining)
 {
-	Graph* g = new Graph();
+	Graph* g = new Graph();	
 
 	for(auto& e : set_node_remaining)
 		g->list_node[e] = new Node(e, list_node[e]->id);
@@ -127,7 +129,9 @@ Graph* Graph::get_subgraph(set<unsigned int> set_node_remaining)
 		for(auto neighbor : list_node[e]->list_neighbor)
 		{
 			if(set_node_remaining.find(neighbor->index)	!= set_node_remaining.end())
+			{
 				g->list_node[e]->add_neighbor(g->list_node[neighbor->index], list_node[e]->list_weights[neighbor->index]);
+			}
 		}
 	}
 

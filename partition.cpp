@@ -60,6 +60,21 @@ bool Store_Partition::insert(Partition* new_part)
 	return true;
 }
 
+unordered_map<unsigned int, vector<unsigned int>> Store_Partition::get_list_community_all_partition() const
+{
+	unordered_map<unsigned int, vector<unsigned int>> list_community;
+	
+	for(auto& part : list_partition)
+	{
+		for(auto& com : part->list_community)
+		{
+			list_community[com.first] = com.second;
+		}
+	}
+
+	return list_community;
+}
+
 Partition::Partition()
 {}
 

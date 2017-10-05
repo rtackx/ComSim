@@ -32,6 +32,7 @@ class Store_Partition
 		int size() const;
 		bool insert(Partition*);
 		void save_partitions(Save*, unordered_map<unsigned int, Node*>&) const;
+		unordered_map<unsigned int, vector<unsigned int>> get_list_community_all_partition() const;
 };
 
 #include "graph.h"

@@ -32,7 +32,7 @@ void graph_run(SIM* sim, string path_dataset, string method, float peripheric_th
 	}
 
 	int num_partition = 0;
-	set<unsigned int> set_node_remaining;
+	set<unsigned int> set_node_remaining, set_node_remaining_final;
 	vector<Graph*> list_graph;
 	list_graph.push_back(graph);
 
@@ -40,25 +40,23 @@ void graph_run(SIM* sim, string path_dataset, string method, float peripheric_th
 	string name_dataset = path_dataset.substr(path_dataset.find_last_of('/')+1, path_dataset.size());
 	string filename_projection = name_dataset + "_" + method + ".projection";
 	Save save(out_directory, "classic");
+	int nb_community_found = 0;
 
 	do
 	{
 		if(verbose)
-			printf("\tComputing similarities | distance = %i\n", distance);
+			printf("\tComputing similarities | distance = %i\n", distance);	
 		sim->similarity_projection(graph->list_node, distance);
+		
 		if(verbose)
 			printf("\tDetecting communities\n");
+		
 		set_node_remaining = sim->find_community(graph->list_node, store_partition);
-
+		
 		if(verbose)
 		{
-			if(store_partition->list_partition.size() > num_partition)
-			{
-				printf("- Found %i communities (%i node(s) remaining)\n", store_partition->list_partition[num_partition]->list_community.size(), set_node_remaining.size());
-				num_partition = store_partition->list_partition.size();
-			}
-			else
-				printf("- Found 0 community (%i node(s) remaining)\n", set_node_remaining.size());
+			nb_community_found = sim->start_num_community - nb_community_found;
+			printf("- Found %i communities (%i node(s) remaining)\n", nb_community_found, set_node_remaining.size());
 		}
 
 		distance--;
@@ -69,7 +67,16 @@ void graph_run(SIM* sim, string path_dataset, string method, float peripheric_th
 
 	} while(set_node_remaining.size() != 0 && distance >= 0);
 
-	sim->community_isolted_nodes(set_node_remaining, store_partition);
+	sim->aggregate(set_node_remaining, set_node_remaining_final);
+
+	Partition* partition = new Partition();
+	for(auto& e : sim->map_com)
+	{
+		partition->update(e.first, e.second);
+	}
+	store_partition->insert(partition);
+
+	sim->community_isolted_nodes(set_node_remaining_final, store_partition);
 
 	if(verbose)
 		printf("\tSaving partition\n");
@@ -99,7 +106,7 @@ void bipartite_run(SIM* sim, string path_dataset, string method, float peripheri
 	string name_dataset = path_dataset.substr(path_dataset.find_last_of('/')+1, path_dataset.size());
 
 	/************* BIPARTITE computation *************/
-	set<unsigned int> set_node_remaining;
+	set<unsigned int> set_node_remaining, set_node_remaining_final;
 	vector<Bipgraph*> list_bigraph;
 	int num_partition, distance_tmp;
 
@@ -111,7 +118,8 @@ void bipartite_run(SIM* sim, string path_dataset, string method, float peripheri
 	Store_Partition* store_partition_top = new Store_Partition();
 	string filename_projection_top = name_dataset + "_" + method + ".top_projection";
 	Save save_top(out_directory, "top");
-
+	int nb_community_found = 0;
+	
 	do
 	{
 		if(verbose)
@@ -123,13 +131,8 @@ void bipartite_run(SIM* sim, string path_dataset, string method, float peripheri
 
 		if(verbose)
 		{
-			if(store_partition_top->list_partition.size() > num_partition)
-			{
-				printf("- Found %i communities (%i node(s) remaining)\n", store_partition_top->list_partition[num_partition]->list_community.size(), set_node_remaining.size());
-				num_partition = store_partition_top->list_partition.size();
-			}
-			else
-				printf("- Found 0 community (%i node(s) remaining)\n", set_node_remaining.size());			
+			nb_community_found = sim->start_num_community - nb_community_found;
+			printf("- Found %i communities (%i node(s) remaining)\n", nb_community_found, set_node_remaining.size());
 		}
 		
 		distance_tmp -= 2;
@@ -139,7 +142,16 @@ void bipartite_run(SIM* sim, string path_dataset, string method, float peripheri
 		
 	} while(set_node_remaining.size() != 0 && distance_tmp > 0);
 
-	sim->community_isolted_nodes(set_node_remaining, store_partition_top);
+	sim->aggregate(set_node_remaining, set_node_remaining_final);
+
+	Partition* partition = new Partition();
+	for(auto& e : sim->map_com)
+	{
+		partition->update(e.first, e.second);
+	}
+	store_partition_top->insert(partition);
+
+	sim->community_isolted_nodes(set_node_remaining_final, store_partition_top);
 
 	if(verbose)
 		printf("\t[TOP] Saving partition\n");
