@@ -463,8 +463,8 @@ set<unsigned int> COMP<T>::find_community(unordered_map<unsigned int, Node*>& li
 	
 	for(auto e : mapT)
 	{
-		if(list_node.find(e.first) != list_node.end())
-			data_explore.list_node_to_visit.push_back(e.first);
+		//if(list_node.find(e.first) != list_node.end())
+		data_explore.list_node_to_visit.push_back(e.first);
 	}
 	random_shuffle(data_explore.list_node_to_visit.begin(), data_explore.list_node_to_visit.end());
 	
