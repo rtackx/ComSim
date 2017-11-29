@@ -10,12 +10,14 @@ Usage : comsim <link_list_file> <neighbor_distance> [similarity_index] [depth]
 
 ComSim is a community detection algorithm. 
 A similarity index is used to measure similarities between nodes.
+
 Basically the similarity is calculated between 2 nodes at a given distance.
 This creates a new weighted graph on which is applied 2 steps :
+
     1) Cycles are detected and considered as core communities. A cycle is a sequence of nodes which have the highest weights (similarities) all along its path.
     2) Based on communities previously detected, nodes that don't belong to any cycle are then placed to a neihbor community maximazing the sum of weights to that community.
-
-  After these 2 steps, if there are still remaining nodes and neighbor distance is greater than 0, then a new weighted graph is computed on the induced graph of the remaining nodes at a smaller distance.
+	
+	After these 2 steps, if there are still remaining nodes and neighbor distance is greater than 0, then a new weighted graph is computed on the induced graph of the remaining nodes at a smaller distance.
 
 ##Parameters :
 
@@ -26,6 +28,7 @@ A link is : "node1 node2 [weight]"
 
 *similarity_index
 There is the list of available similarity indices (default is cn) :
+
 	    cn : common neighbors
 	    aa : adamic-adar
 	    ji : jaccard index
