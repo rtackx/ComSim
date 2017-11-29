@@ -27,7 +27,9 @@ A link is : "node1 node2 [weight]"
 *similarity_index
 There is the list of available similarity indices (default is cn) :
 	    cn : common neighbors
-	    aa : adamic-adar" << endl << endl;
+	    aa : adamic-adar
+	    ji : jaccard index
+	    ra : ressource allocator
 
 *depth
 A depth value can be chosen (default is 1). This value indicates how many cycles a node can be part of.
