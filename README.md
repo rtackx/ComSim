@@ -1,26 +1,38 @@
 # ComSim
 
-ComSim is a community detection algorithm for :
-- unipartite networks
-- bipartite networks
-- any network depicting a bipartite structure
+ComSim is a community detection algorithm.
+Given a input network a partition of nodes into communities is identified.
+It can also produce an output set of overlapping communities (see option [depth]).
 
-ComSim { COMMUNITY SIMILARITY }. uses a similarity measure to calculate similiarity between nodes (see option -m).
+Usage : comsim <link_list_file> <neighbor_distance> [similarity_index] [depth]
 
-Usage :  ./bipsim  -b/-ba/-g <dataset> <out_directory> -m <similarity_measure>
+Information :
+ComSim is a community detection algorithm. 
+A similarity index is used to measure similarities between nodes.
+Basically the similarity is calculated between 2 nodes at a given distance.
+This creates a new weighted graph on which is applied 2 steps :
+    1) Cycles are detected and considered as core communities. A cycle is a sequence of nodes which have the highest weights (similarities) all along its path.
+    2) Based on communities previously detected, nodes that don't belong to any cycle are then placed to a neihbor community maximazing the sum of weights to that community.
 
-----=== Data format ===----
-# unipartite (-g) => list of edges : 
-v1 v2 [weight]\n
-...
-# bipartite (-b) => (v1,v2,..,vN) top nodes - (w1,w2,...,wN) bot nodes :
-v1 w1 w2 w3\n
-v2 w2 w3 w4\n
-v3 w1 w4\n
-...
-# bipartite with weights (-ba) => (v1,v2,..,vN) top nodes - (w1,w2,...,wN) bot nodes :
-v1 w1 weight\n
-v1 w2 weight\n
-v1 w3 weight\n
-v2 w2 weight\n
-...
+  After these 2 steps, if there are still remaining nodes and neighbor distance is greater than 0, then a new weighted graph is computed on the induced graph of the remaining nodes at a smaller distance.
+
+Parameters :
+*link_list_file : input network as a list of links.
+A link is : "node1 node2 [weight]"
+
+*neighbor_distance : similarity projection between nodes at distance <neighbor_distance>.
+
+*similarity_index
+There is the list of available similarity indices (default is cn) :
+	    cn : common neighbors
+	    aa : adamic-adar" << endl << endl;
+
+*depth
+A depth value can be chosen (default is 1). This value indicates how many cycles a node can be part of.
+Choosing a depth value > 1 produces overlapping between communities.
+
+
+ComSim examples :
+	"./comsim uni_network_links 1 > detected_communities" executes ComSim with cn similarity index between nodes at distance 1 on a unipartite network.
+	"./comsim bip_links 2 aa > detected_communities" executes ComSim with aa similarity index between nodes at distance 2 on a bipartite network. Since there is no common neighbor between 2 nodes at distance 1 in a bipartite network, it requires an initial distance > 1.
+	"./comsim uni_network_links 1 cm 3 > detected_communities" executes ComSim with cn similarity index between nodes at distance 1 on a unipartite network and it allows each node to be part of 3 cycles.
