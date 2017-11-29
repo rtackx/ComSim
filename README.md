@@ -6,7 +6,8 @@ It can also produce an output set of overlapping communities (see option [depth]
 
 Usage : comsim <link_list_file> <neighbor_distance> [similarity_index] [depth]
 
-Information :
+##Information :
+
 ComSim is a community detection algorithm. 
 A similarity index is used to measure similarities between nodes.
 Basically the similarity is calculated between 2 nodes at a given distance.
@@ -16,7 +17,8 @@ This creates a new weighted graph on which is applied 2 steps :
 
   After these 2 steps, if there are still remaining nodes and neighbor distance is greater than 0, then a new weighted graph is computed on the induced graph of the remaining nodes at a smaller distance.
 
-Parameters :
+##Parameters :
+
 *link_list_file : input network as a list of links.
 A link is : "node1 node2 [weight]"
 
@@ -32,7 +34,8 @@ A depth value can be chosen (default is 1). This value indicates how many cycles
 Choosing a depth value > 1 produces overlapping between communities.
 
 
-ComSim examples :
+##ComSim examples :
+
 	"./comsim uni_network_links 1 > detected_communities" executes ComSim with cn similarity index between nodes at distance 1 on a unipartite network.
 	"./comsim bip_links 2 aa > detected_communities" executes ComSim with aa similarity index between nodes at distance 2 on a bipartite network. Since there is no common neighbor between 2 nodes at distance 1 in a bipartite network, it requires an initial distance > 1.
 	"./comsim uni_network_links 1 cm 3 > detected_communities" executes ComSim with cn similarity index between nodes at distance 1 on a unipartite network and it allows each node to be part of 3 cycles.
