@@ -4,12 +4,24 @@ Graph::Graph()
 {
 	n = 0;
 	m = 0;
+	size_list_nodes = 0;
+	list_nodes = NULL;
 }
 
 Graph::~Graph()
 {
-	for(auto& e : list_node)
-		delete e.second;
+	unsigned int index, nb;
+
+	index = 0;
+	while(index < size_list_nodes)
+	{
+		nb = list_nodes[index]->nb_neighbors;
+		delete list_nodes[index];
+		index += nb + 1;		
+	}
+
+	if(list_nodes)
+		delete[] list_nodes;
 }
 
 void Graph::load_graph(string bip_filename)
@@ -24,7 +36,6 @@ void Graph::load_graph(string bip_filename)
 	}
 
 	Node* node, *node_tmp;
-	unsigned int id = 0;
 
 	char* w = (char*) malloc(sizeof(char) * SIZE_BUFFER);
 	string word;
@@ -32,14 +43,20 @@ void Graph::load_graph(string bip_filename)
 	float weight;
 	int i, size_w, count;
 	bool new_w, new_line;
-	new_line = new_w = false;
+	new_line = new_w;
 
-	unordered_map<string, unsigned int> map_node;
+	unsigned int index = 0;
+	int index1, index2;
+	unordered_map<string, unsigned int> map_word;
+	unordered_map<unsigned int, Node*> map_node;
+	unordered_map<unsigned int, set<pair<unsigned int, float>, comp_pair>> map_neighbor;
+
+	index2 = -1;
 	size_w = 0;
 	count = 0;
 	weight = 1.0;
 	node_tmp = NULL;
-	unsigned k = 0;
+
 	do
 	{
 		i = read(fd, &c, 1);
@@ -50,9 +67,7 @@ void Graph::load_graph(string bip_filename)
 		if(c == delim || c == '\n')
 		{
 			if(c == '\n')
-			{
 				new_line = true;
-			}
 
 			w[size_w] = '\0';
 			new_w = true;
@@ -74,31 +89,34 @@ void Graph::load_graph(string bip_filename)
 			}
 			else
 			{
-				if(map_node.find(word) == map_node.end())
+				if(map_word.find(word) == map_word.end())
 				{
-					node = new Node(id, word);
-					list_node[id] = node;
-					map_node[word] = id;
-					id++;
+					node = new Node();
+					node->id = word;
+					map_node[index] = node;
+					map_word[word] = index;
+
+					index1 = index;
+					index++;
 				}
 				else
-					node = list_node[map_node[word]];
+					index1 = map_word[word];
 			}
 
 			if(new_line)
 			{
-				node->add_neighbor(node_tmp, weight);
-				node_tmp->add_neighbor(node, weight);
+				map_neighbor[index1].insert(make_pair(index2, weight));
+				map_neighbor[index2].insert(make_pair(index1, weight));
 
 				new_line = false;
 				count = 0;
 				weight = 1.0;
-				node_tmp = NULL;
+				index2 = -1;
 			}
 			else
 			{
-				if(node_tmp == NULL)
-					node_tmp = node;
+				if(index2 == -1)
+					index2 = index1;
 			}
 			
 			free(w);
@@ -109,31 +127,85 @@ void Graph::load_graph(string bip_filename)
 	} while(i != 0);
 	free(w);
 
-	n = list_node.size();
-	m = 0;
-	for(auto& e : list_node)
-		m += e.second->list_neighbor.size();
-	//m /= 2;
-	
+	create_graph(map_node, map_neighbor);
 }
 
-Graph* Graph::get_subgraph(set<unsigned int> set_node_remaining)
+void Graph::create_graph(unordered_map<unsigned int, Node*>& map_node, unordered_map<unsigned int, set<pair<unsigned int, float>, comp_pair>>& map_neighbor)
 {
-	Graph* g = new Graph();	
+	Node* node;
+	unsigned int index;
+	float weight;
 
-	for(auto& e : set_node_remaining)
-		g->list_node[e] = new Node(e, list_node[e]->id);
+	n = map_node.size();
+	for(auto& e : map_neighbor)
+		m += e.second.size();
 
-	for(auto& e : set_node_remaining)
+	size_list_nodes = n + (m);
+	list_nodes = new Node*[size_list_nodes];
+	
+	index = 0;
+	for(auto& e : map_node)
 	{
-		for(auto neighbor : list_node[e]->list_neighbor)
+		node = e.second;
+		node->nb_neighbors = map_neighbor[e.first].size();
+		
+		node->index = index;
+		if(node->main_index == -1)
+			node->main_index = index;
+		
+		list_nodes[index] = node;
+		index++;
+
+		weight = 0.0;
+		for(auto& d : map_neighbor[e.first])
 		{
-			if(set_node_remaining.find(neighbor->index)	!= set_node_remaining.end())
-			{
-				g->list_node[e]->add_neighbor(g->list_node[neighbor->index], list_node[e]->list_weights[neighbor->index]);
-			}
+			node->neighbor_weights.push_back(d.second);
+			list_nodes[index] = map_node[d.first];
+			index++;
 		}
 	}
+}
 
-	return g;
+Graph* Graph::get_subgraph(vector<unsigned int>& list_ending_nodes) const
+{
+	Graph* new_graph = NULL;
+
+	if(list_ending_nodes.size() > 0)
+	{
+		new_graph = new Graph();
+
+		unordered_map<unsigned int, Node*> map_node;
+		unordered_map<unsigned int, set<pair<unsigned int, float>, comp_pair>> map_neighbor;
+		unsigned int index;
+		Node* node;
+
+		set<unsigned int> list_accepted_index;
+		for(auto& index : list_ending_nodes)
+			list_accepted_index.insert(index);
+
+		index = 0;
+		while(index < size_list_nodes)
+		{
+			if(list_accepted_index.find(index) != list_accepted_index.end())
+			{
+				node = list_nodes[index];
+
+				map_node[index] = new Node();
+				map_node[index]->id = node->id;
+				map_node[index]->main_index = node->main_index;
+
+				for(unsigned int i=0; i<node->nb_neighbors; i++)
+				{
+					if(list_accepted_index.find(list_nodes[index+i+1]->index) != list_accepted_index.end())
+						map_neighbor[index].insert(make_pair(list_nodes[index+i+1]->index, node->neighbor_weights[i]));
+				}
+			}
+
+			index += list_nodes[index]->nb_neighbors + 1;
+		}
+
+		new_graph->create_graph(map_node, map_neighbor);
+	}
+
+	return new_graph;
 }

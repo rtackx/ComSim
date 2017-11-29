@@ -3,7 +3,6 @@
 
 #include "libs.h"
 #include "node.h"
-#include "partition.h"
 
 class Graph
 {
@@ -11,12 +10,14 @@ public:
 	unsigned int n;
 	unsigned int m;
 
-	unordered_map<unsigned int, Node*> list_node;
-	
+	Node** list_nodes;
+	unsigned int size_list_nodes;
+
 	Graph();
 	~Graph();
-	void load_graph(string);	
-	Graph* get_subgraph(set<unsigned int>);
+	void load_graph(string);
+	void create_graph(unordered_map<unsigned int, Node*>&, unordered_map<unsigned int, set<pair<unsigned int, float>, comp_pair>>&);
+	Graph* get_subgraph(vector<unsigned int>&) const;
 };
 
 #endif

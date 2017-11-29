@@ -28,27 +28,23 @@
 #include <random>
 #include <iterator>
 #include <chrono>
+#include <functional>
 
 using namespace std;
 using namespace std::chrono;
 
-class Save
+struct comp_pair
 {
-public:
-	string directory;
-	string prefix;
-	Save(string, string);
-	string get_path(string) const;
+	inline bool operator()(const pair<unsigned int, float>& lhs, const pair<unsigned int, float>& rhs) const 
+	{
+		if(lhs.second > rhs.second)
+			return true;
+		if(lhs.second < rhs.second)
+			return false;
+		if(lhs.first < rhs.first)
+		    return true;
+		return false;
+	}
 };
-
-vector<unsigned int> random_map_element(unordered_map<unsigned int, unsigned int>);
-vector<unsigned int> sort_desc_map_element(unordered_map<unsigned int, unsigned int>);
-//int get_random_element_set(set<unsigned int>);
-int get_last_element(vector<unsigned int>);
-int get_random_element(vector<unsigned int>&);
-void display_duration(high_resolution_clock::time_point, high_resolution_clock::time_point);
-void display_ms(high_resolution_clock::time_point, high_resolution_clock::time_point);
-void display_nano(high_resolution_clock::time_point, high_resolution_clock::time_point);
-void display_peakRSS();
 
 #endif
