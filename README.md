@@ -26,7 +26,7 @@ This creates a new weighted graph on which is applied 2 steps :
 *link_list_file : input network as a list of links.
 A link is : "node1 node2 [weight]"
 
-*neighbor_distance : similarity projection between nodes at distance <neighbor_distance>.
+*neighbor_distance : similarity projection between nodes at distance <neighbor_distance> (integer).
 
 *similarity_index : a measurement of similarity between two nodes.
 
@@ -37,8 +37,7 @@ There is the list of available similarity indices (default is cn) :
 	    ji : jaccard index
 	    ra : ressource allocator
 
-*depth
-A depth value can be chosen (default is 1). This value indicates how many cycles a node can be part of.
+*depth : a depth value can be chosen (default is 1). This value indicates how many cycles a node can be part of.
 Choosing a depth value > 1 produces overlapping between communities.
 
 
