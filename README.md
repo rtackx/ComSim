@@ -24,7 +24,8 @@ A link is : "node1 node2 [weight]"
 
 *neighbor_distance : similarity projection between nodes at distance <neighbor_distance>.
 
-*similarity_index
+*similarity_index : a measurement of similarity between two nodes.
+
 There is the list of available similarity indices (default is cn) :
 
 	    cn : common neighbors
