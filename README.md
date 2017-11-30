@@ -16,7 +16,7 @@ A similarity index is used to measure similarities between nodes.
 Basically the similarity is calculated between 2 nodes at a given distance.
 This creates a new weighted graph on which is applied 2 steps :
 
-    1) Cycles are detected and considered as core communities. A cycle is a sequence of nodes which have the highest weights (similarities) all along its path.
+    1) Cycles are detected and considered as core communities. In this context, a cycle is defined as a closed chain of nodes that has the highest weights (similarities) all along its path.
     2) Based on communities previously detected, nodes that don't belong to any cycle are then placed into a neighbor community maximazing the sum of link weights towards that community.
 	
 	After these 2 steps, if there are still remaining nodes and neighbor distance is greater than 0, then a new weighted graph is computed on the induced graph of the remaining nodes at a smaller distance.
