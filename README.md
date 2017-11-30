@@ -8,9 +8,7 @@ Usage : comsim <link_list_file> <neighbor_distance> [similarity_index] [depth]
 
 ##Information :
 
-ComSim is a community detection algorithm. 
 A similarity index is used to measure similarities between nodes.
-
 Basically the similarity is calculated between 2 nodes at a given distance.
 This creates a new weighted graph on which is applied 2 steps :
 
