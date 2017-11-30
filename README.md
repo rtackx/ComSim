@@ -1,17 +1,14 @@
 # ComSim
 
 ComSim is a community detection algorithm.
-
-Usage : comsim <link_list_file> <neighbor_distance> [similarity_index] [depth]
-
 Given a input network a partition of nodes into communities is identified.
 Any kind of network (unipartite, bipartite, multipartite, multilayer) can be used.
-
-If network has a bipartite structure, we should use a <neighbor_distance> of 2. 
+If network has a bipartite structure, <neighbor_distance> should be set at 2. 
 
 ComSim can also produce an output set of overlapping communities (see option [depth]).
 
 
+Usage : comsim <link_list_file> <neighbor_distance> [similarity_index] [depth]
 
 ##Information :
 
