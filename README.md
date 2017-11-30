@@ -43,4 +43,4 @@ Choosing a depth value > 1 produces overlapping between communities.
 
 	"./comsim uni_network_links 1 > detected_communities" executes ComSim with cn similarity index between nodes at distance 1 on a unipartite network.
 	"./comsim bip_links 2 aa > detected_communities" executes ComSim with aa similarity index between nodes at distance 2 on a bipartite network. Since there is no common neighbor between 2 nodes at distance 1 in a bipartite network, it requires an initial distance > 1.
-	"./comsim uni_network_links 1 cm 3 > detected_communities" executes ComSim with cn similarity index between nodes at distance 1 on a unipartite network and it allows each node to be part of 3 cycles.
+	"./comsim uni_network_links 1 cn 3 > detected_communities" executes ComSim with cn similarity index between nodes at distance 1 on a unipartite network and it allows each node to be part of 3 cycles.
