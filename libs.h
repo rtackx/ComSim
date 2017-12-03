@@ -41,9 +41,12 @@ struct comp_pair
 			return true;
 		if(lhs.second < rhs.second)
 			return false;
-		if(lhs.first < rhs.first)
-		    return true;
-		return false;
+
+		return true;
+
+		// if(lhs.first < rhs.first)
+		//     return true;
+		// return false;
 	}
 };
 

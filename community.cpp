@@ -60,8 +60,6 @@ void Community::cycles(Graph*& graph_projection, vector<unsigned int>& list_inde
 		vec_depth->push_back(0);
 	}
 
-	srand(unsigned(time(NULL)));
-
 	int i = rand() % list_index_nodes.size();
 	bool new_node = true;
 

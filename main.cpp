@@ -51,7 +51,7 @@ Projection* select_similarity(string similarity_index)
 }
 
 int main(int argc, const char* argv[])
-{	
+{
 	string path_dataset, similarity_index;
 	int distance, depth_best;
 	static set<string> list_valid_similarities = {"cn", "aa", "ji"};
@@ -100,6 +100,8 @@ int main(int argc, const char* argv[])
 	main_graph->load_graph(path_dataset);
 	cerr << "   n = " << main_graph->n << endl << "   m = " << main_graph->m/2 << endl;
 	
+	srand(unsigned(time(NULL)));
+
 	Community* c = new Community(main_graph, depth_best);
 	Projection* p;
 	Graph* g;
@@ -131,11 +133,12 @@ int main(int argc, const char* argv[])
 	
 	cerr << endl << "--------------" << endl;
 
+	unsigned int i;
 	for(auto& e : c->community)
 	{
-		for(auto& node : e.second)
-			cout << node->id << " ";
-		cout << endl;
+		for(i=0; i<e.second.size()-1; i++)
+			cout << e.second[i]->id << " ";
+		cout << e.second[e.second.size()-1]->id << endl;
 	}
 	
 	for(auto& g : list_subgraphs)

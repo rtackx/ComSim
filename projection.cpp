@@ -19,7 +19,8 @@ void Projection::project(Graph*& in_graph, unsigned int distance)
 	
 	unordered_map<unsigned int, Node*> map_node;
 	unordered_map<unsigned int, set<pair<unsigned int, float>, comp_pair>> map_neighbor;
-	
+	vector<unsigned int> shuffle;
+
 	index = 0;
 	while(index < in_graph->size_list_nodes)
 	{
@@ -30,14 +31,19 @@ void Projection::project(Graph*& in_graph, unsigned int distance)
 		map_node[index]->main_index = in_graph->list_nodes[index]->main_index;
 		
 		for(auto& n : list_distance_neighbors)
+			shuffle.push_back(n->index);
+		random_shuffle(shuffle.begin(), shuffle.end());
+
+		for(auto& index_neighbor : shuffle)
 		{
-			projection_weight = similarity_projection(in_graph, index, n->index);
+			projection_weight = similarity_projection(in_graph, index, index_neighbor);
 
 			if(projection_weight > 0.0)
-				map_neighbor[index].insert(make_pair(n->index, projection_weight));
+				map_neighbor[index].insert(make_pair(index_neighbor, projection_weight));
 		}
 		
 		index += in_graph->list_nodes[index]->nb_neighbors + 1;
+		shuffle.clear();
 	}
 
 	graph_projection->create_graph(map_node, map_neighbor);
