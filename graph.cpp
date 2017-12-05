@@ -64,6 +64,9 @@ void Graph::load_graph(string bip_filename)
 		if(size_w == SIZE_BUFFER)
 			w = (char*) realloc(w, sizeof(char) * SIZE_BUFFER + size_w);
 
+		if(c == '\r')
+			continue;
+
 		if(c == delim || c == '\n')
 		{
 			if(c == '\n')
@@ -176,8 +179,10 @@ Graph* Graph::get_subgraph(vector<unsigned int>& list_ending_nodes) const
 
 		unordered_map<unsigned int, Node*> map_node;
 		unordered_map<unsigned int, set<pair<unsigned int, float>, comp_pair>> map_neighbor;
+		pair<unordered_map<unsigned int, set<pair<unsigned int, float>, comp_pair>>::iterator, bool> it_map;
 		unsigned int index;
 		Node* node;
+		Node* new_node;
 
 		set<unsigned int> list_accepted_index;
 		for(auto& index : list_ending_nodes)
@@ -189,15 +194,18 @@ Graph* Graph::get_subgraph(vector<unsigned int>& list_ending_nodes) const
 			if(list_accepted_index.find(index) != list_accepted_index.end())
 			{
 				node = list_nodes[index];
+				new_node = new Node();				
+				new_node->id = node->id;
+				new_node->main_index = node->main_index;
+				map_node[index] = new_node;
 
-				map_node[index] = new Node();
-				map_node[index]->id = node->id;
-				map_node[index]->main_index = node->main_index;
+				it_map = map_neighbor.emplace(index, set<pair<unsigned int, float>, comp_pair>());
 
 				for(unsigned int i=0; i<node->nb_neighbors; i++)
 				{
 					if(list_accepted_index.find(list_nodes[index+i+1]->index) != list_accepted_index.end())
-						map_neighbor[index].insert(make_pair(list_nodes[index+i+1]->index, node->neighbor_weights[i]));
+						it_map.first->second.insert(make_pair(list_nodes[index+i+1]->index, node->neighbor_weights[i]));
+					//map_neighbor[index].insert(make_pair(list_nodes[index+i+1]->index, node->neighbor_weights[i]));
 				}
 			}
 

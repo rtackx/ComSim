@@ -44,7 +44,6 @@ void Community::cycles(Graph*& graph_projection, vector<unsigned int>& list_inde
 	unsigned int current, current_tmp, most_similar;
 	vector<unsigned int>::iterator it_current, it_list_visited, it_list_index;
 	vector<unsigned int>* vec_depth;
-	int h;
 
 	unordered_map<unsigned int, vector<unsigned int>*> map_cycle_nodes;
 	for(auto& index : list_index_nodes)
@@ -142,8 +141,9 @@ void Community::aggregate(Graph*& graph_projection, unordered_set<unsigned int>&
 
 			for(auto& index_com : map_community[graph_projection->list_nodes[index+i+1]->index])
 			{
-				if(map_similar_community_tmp->find(index_com) == map_similar_community_tmp->end())
-					map_similar_community_tmp->insert(make_pair(index_com, 0.0));
+				map_similar_community_tmp->emplace(make_pair(index_com, 0.0));
+				/*if(map_similar_community_tmp->find(index_com) == map_similar_community_tmp->end())
+				 	map_similar_community_tmp->insert(make_pair(index_com, 0.0));*/
 				map_similar_community_tmp->at(index_com) += node->neighbor_weights[i];
 			}
 		}

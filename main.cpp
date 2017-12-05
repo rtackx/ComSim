@@ -13,7 +13,7 @@
 void display_ms(high_resolution_clock::time_point t1, high_resolution_clock::time_point t2)
 {
     auto duration = duration_cast<milliseconds>( t2 - t1 ).count();
-    cerr << duration << endl;
+    cerr << duration / 1000.0 << endl;
 }
 
 void usage()
@@ -30,7 +30,11 @@ void usage()
 
 	cerr << "There is the list of available similarity indices (default is cn) :" << endl;
 	cerr << "    cn : common neighbors" << endl;
-	cerr << "    aa : adamic-adar" << endl << endl;
+	cerr << "    ji : jaccard index" << endl;
+	cerr << "    aa : adamic-adar" << endl;
+	cerr << "    ra : resource allocator" << endl;
+	cerr << "    lhn : LHN1" << endl;
+	cerr << "    pan : preferential attachment neighbor" << endl << endl;
 
 	cerr << "A depth value can be chosen (default is 1). This value indicates how many cycles a node can be part of." << endl;
 	cerr << "Choosing a depth value > 1 produces overlapping between communities." << endl << endl;
@@ -48,13 +52,23 @@ Projection* select_similarity(string similarity_index)
 {
 	if(similarity_index == "cn")
 		return new CommonNeighbors();
+	else if(similarity_index == "ji")
+		return new JaccardIndex();
+	else if(similarity_index == "aa")
+		return new AdamicAdar();
+	else if(similarity_index == "ra")
+		return new ResourceAllocator();
+	else if(similarity_index == "lhn")
+		return new LHN1();
+	else if(similarity_index == "pan")
+		return new PA_Neighbor();
 }
 
 int main(int argc, const char* argv[])
 {
 	string path_dataset, similarity_index;
 	int distance, depth_best;
-	static set<string> list_valid_similarities = {"cn", "aa", "ji"};
+	static set<string> list_valid_similarities = {"cn", "ji", "aa", "ra", "lhn", "pan"};
 
 	if(argc < 3)
 	{
@@ -79,13 +93,16 @@ int main(int argc, const char* argv[])
 				return 0;
 			}
 
-			if(argc == 5)
-				depth_best = atoi(argv[4]);
-			else
+			if(argc > 4)
 			{
-				usage();
-				return 0;
-			}
+				if(argc == 5)
+					depth_best = atoi(argv[4]);
+				else
+				{
+					usage();
+					return 0;
+				}
+			}			
 		}
 	}
 
@@ -150,6 +167,7 @@ int main(int argc, const char* argv[])
 	t2 = high_resolution_clock::now();
 	cerr << "Time : ";
 	display_ms(t1, t2);
+
 
 	return 1;
 }
