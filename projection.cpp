@@ -22,7 +22,7 @@ void Projection::project(Graph*& in_graph, unsigned int distance)
 	unordered_map<unsigned int, set<pair<unsigned int, float>, comp_pair>> map_neighbor;
 	pair<unordered_map<unsigned int, set<pair<unsigned int, float>, comp_pair>>::iterator, bool> it_map;
 	vector<unsigned int> shuffle;
-
+	
 	index = 0;
 	while(index < in_graph->size_list_nodes)
 	{

@@ -11,7 +11,6 @@ private:
 	unsigned int index_community;
 	unsigned int depth_best;
 
-	void save_communities(Graph*&);
 public:
 	unordered_map<unsigned int, vector<unsigned int>> map_community;
 	unordered_map<unsigned int, unordered_map<unsigned int, float>*> map_similar_community;
@@ -22,7 +21,8 @@ public:
 
 	void detect(Graph*&, vector<unsigned int>&);
 	void cycles(Graph*&, vector<unsigned int>&, unordered_set<unsigned int>&);
-	void aggregate(Graph*&, unordered_set<unsigned int>&, vector<unsigned int>&);	
+	void aggregate(Graph*&, unordered_set<unsigned int>&, vector<unsigned int>&);
+	void save_communities(Graph*&);
 };
 
 #endif

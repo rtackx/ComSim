@@ -33,7 +33,7 @@ void Community::detect(Graph*& graph_projection, vector<unsigned int>& list_endi
 		aggregate(graph_projection, list_remaining_nodes, list_ending_nodes);
 	}
 
-	save_communities(graph_projection);
+	//save_communities(graph_projection);
 	map_community.clear();
 }
 
@@ -125,7 +125,7 @@ void Community::aggregate(Graph*& graph_projection, unordered_set<unsigned int>&
 	unsigned int index_neighbor, i;
 	float max;
 	int most_similar_com;
-	
+
 	for(auto& index : list_remaining_nodes)
 	{
 		node = graph_projection->list_nodes[index];

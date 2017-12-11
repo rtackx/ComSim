@@ -108,10 +108,7 @@ int main(int argc, const char* argv[])
 
 	high_resolution_clock::time_point t1, t2;
 	t1 = high_resolution_clock::now();
-
-	vector<Graph*> list_subgraphs;	
-	vector<unsigned int> list_ending_nodes;
-
+	
 	Graph* main_graph = new Graph();
 	cerr << "Loading graph..." << endl;
 	main_graph->load_graph(path_dataset);
@@ -122,34 +119,24 @@ int main(int argc, const char* argv[])
 	Community* c = new Community(main_graph, depth_best);
 	Projection* p;
 	Graph* g;
+	vector<unsigned int> list_ending_nodes;
 
 	g = main_graph;
-	do 
-	{
-		list_ending_nodes.clear();
-		p = select_similarity(similarity_index);
-		cerr << endl << "Projecting graph (distance : " << distance << ") ..." << endl;
-
-		p->project(g, distance);
-
-		if(p->graph_projection->size_list_nodes > 0)
-		{
-			cerr << "Detecting communities..." << endl;
-			c->detect(p->graph_projection, list_ending_nodes);
-
-			g = main_graph->get_subgraph(list_ending_nodes);
-			list_subgraphs.push_back(g);
-		}
 		
-		cerr << "Number of remaining nodes : " << list_ending_nodes.size() << endl;
+	p = select_similarity(similarity_index);
+	cerr << endl << "Projecting graph (distance : " << distance << ") ..." << endl;
+	p->project(g, distance);
 
-		delete p;
-		distance--;
+	if(p->graph_projection->size_list_nodes > 0)
+	{
+		cerr << "Detecting communities..." << endl;
+		c->detect(p->graph_projection, list_ending_nodes);
 
-	} while(distance > 0 && list_ending_nodes.size() > 0);
-	
+		//g = main_graph->get_subgraph(list_ending_nodes);
+	}
+	cerr << "Number of remaining nodes : " << list_ending_nodes.size() << endl;
+
 	cerr << endl << "--------------" << endl;
-
 	unsigned int i;
 	for(auto& e : c->community)
 	{
@@ -157,17 +144,16 @@ int main(int argc, const char* argv[])
 			cout << e.second[i]->id << " ";
 		cout << e.second[e.second.size()-1]->id << endl;
 	}
-	
-	for(auto& g : list_subgraphs)
-		delete g;
-	delete main_graph;
-	delete c;
-
 	cerr << "--------------" << endl;
+	
+	delete p;
+	delete g;
+	//delete main_graph;
+	delete c;
+	
 	t2 = high_resolution_clock::now();
 	cerr << "Time : ";
 	display_ms(t1, t2);
-
 
 	return 1;
 }
