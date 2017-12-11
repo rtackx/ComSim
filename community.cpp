@@ -33,7 +33,7 @@ void Community::detect(Graph*& graph_projection, vector<unsigned int>& list_endi
 		aggregate(graph_projection, list_remaining_nodes, list_ending_nodes);
 	}
 
-	//save_communities(graph_projection);
+	save_communities(graph_projection);
 	map_community.clear();
 }
 
