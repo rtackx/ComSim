@@ -1,8 +1,10 @@
 #include "projection.h"
 
-Projection::Projection()
+Projection::Projection(Graph*& in_graph)
 {
 	graph_projection = new Graph();
+	this->in_graph = in_graph; 
+	nb_threads = 5;
 }
 
 Projection::~Projection()
@@ -11,50 +13,106 @@ Projection::~Projection()
 		delete graph_projection;
 }
 
-void Projection::project(Graph*& in_graph, unsigned int distance)
+void* projection_main_thread(void* main_struct_args)
 {
-	unsigned int d, index;
-	vector<Node*> list_distance_neighbors;
-	float projection_weight;
-	Node* node;
+	projection_thread_args* main_args = static_cast<projection_thread_args*>(main_struct_args);
+
+	pthread_t thread;
+	unsigned int index, size_list_nodes;
+	size_list_nodes = main_args->p->in_graph->size_list_nodes;
+
+	projection_thread_args args;
+	args.p = main_args->p;
+	args.map_node = main_args->map_node;
+	args.map_neighbor = main_args->map_neighbor;
+	args.distance = main_args->distance;
+
+	pthread_mutex_lock(&projection_main_mutex);
+	if(main_args->index == size_list_nodes)
+	{
+		pthread_mutex_unlock(&projection_main_mutex);
+		return NULL;
+	}
+	pthread_mutex_unlock(&projection_main_mutex);
 	
-	unordered_map<unsigned int, Node*> map_node;
-	unordered_map<unsigned int, set<pair<unsigned int, float>, comp_pair>> map_neighbor;
+	do
+	{
+		pthread_mutex_lock(&projection_main_mutex);
+		args.index = main_args->index;
+		main_args->index += main_args->p->in_graph->list_nodes[main_args->index]->nb_neighbors + 1;
+		pthread_mutex_unlock(&projection_main_mutex);
+
+		pthread_create(&thread, NULL, &compute_projection_thread, &args);
+		pthread_join(thread, NULL);
+
+		pthread_mutex_lock(&projection_main_mutex);
+		index = main_args->index;
+		pthread_mutex_unlock(&projection_main_mutex);
+
+
+	} while(index < size_list_nodes);
+}
+
+void* compute_projection_thread(void* struct_args)
+{
+	projection_thread_args* args = static_cast<projection_thread_args*>(struct_args);
+
 	pair<unordered_map<unsigned int, set<pair<unsigned int, float>, comp_pair>>::iterator, bool> it_map;
 	vector<unsigned int> shuffle;
+	unordered_map<unsigned int, Node*> map_node;
+	unordered_map<unsigned int, set<pair<unsigned int, float>, comp_pair>> map_neighbor;
+
+	vector<Node*> list_distance_neighbors = args->p->get_neighbors(args->index, args->distance);
+	float projection_weight;
+
+	Node* node = new Node();
+	node->id = args->p->in_graph->list_nodes[args->index]->id;
+	node->main_index = args->p->in_graph->list_nodes[args->index]->main_index;
+
+	for(auto& n : list_distance_neighbors)
+		shuffle.push_back(n->index);
+	random_shuffle(shuffle.begin(), shuffle.end());
+
+	it_map = map_neighbor.emplace(args->index, set<pair<unsigned int, float>, comp_pair>());
 	
-	index = 0;
-	while(index < in_graph->size_list_nodes)
+	for(auto& index_neighbor : shuffle)
 	{
-		list_distance_neighbors = get_neighbors(in_graph, index, distance);
+		projection_weight = args->p->similarity_projection(args->index, index_neighbor);
 
-		node = new Node();
-		node->id = in_graph->list_nodes[index]->id;
-		node->main_index = in_graph->list_nodes[index]->main_index;
-		map_node[index] = node;
-
-		for(auto& n : list_distance_neighbors)
-			shuffle.push_back(n->index);
-		random_shuffle(shuffle.begin(), shuffle.end());
-
-		it_map = map_neighbor.emplace(index, set<pair<unsigned int, float>, comp_pair>());
-
-		for(auto& index_neighbor : shuffle)
-		{
-			projection_weight = similarity_projection(in_graph, index, index_neighbor);
-
-			if(projection_weight > 0.0)
-				it_map.first->second.insert(make_pair(index_neighbor, projection_weight));
-		}
-		
-		index += in_graph->list_nodes[index]->nb_neighbors + 1;
-		shuffle.clear();
+		if(projection_weight > 0.0)
+			it_map.first->second.insert(make_pair(index_neighbor, projection_weight));
 	}
 
+	pthread_mutex_lock(&compute_projection_mutex);
+	args->map_node->emplace(make_pair(args->index, node));
+	args->map_neighbor->insert(map_neighbor.begin(), map_neighbor.end());
+	pthread_mutex_unlock(&compute_projection_mutex);
+}
+
+void Projection::project(unsigned int distance)
+{
+	unordered_map<unsigned int, Node*> map_node;
+	unordered_map<unsigned int, set<pair<unsigned int, float>, comp_pair>> map_neighbor;
+	
+	pthread_t threads[nb_threads];
+	projection_thread_args main_args;
+	main_args.index = 0;
+	main_args.p = this;
+	main_args.map_node = &map_node;
+	main_args.map_neighbor = &map_neighbor;
+	main_args.distance = distance;
+
+	unsigned int i;
+	for(i=0; i<nb_threads; i++)
+		pthread_create(&threads[i], NULL, &projection_main_thread, &main_args);
+
+	for(i=0; i<nb_threads; i++)
+		pthread_join(threads[i], NULL);
+	
 	graph_projection->create_graph(map_node, map_neighbor);
 }
 
-vector<Node*> Projection::get_neighbors(Graph*& in_graph, unsigned int index, unsigned int distance) const
+vector<Node*> Projection::get_neighbors(unsigned int& index, unsigned int& distance) const
 {
 	vector<Node*> list_neighbors, hist_list_neighbors, list_distance_neighbors;
 	unsigned int i, d = 0;
@@ -84,7 +142,7 @@ vector<Node*> Projection::get_neighbors(Graph*& in_graph, unsigned int index, un
 	return list_neighbors;
 }
 
-set<Node*> Projection::get_intersection(Graph*& in_graph, Node* node1, Node* node2) const
+set<Node*> Projection::get_intersection(Node*& node1, Node*& node2) const
 {
 	vector<Node*> set_node1, set_node2;
 	set<Node*> intersection;
@@ -104,15 +162,15 @@ set<Node*> Projection::get_intersection(Graph*& in_graph, Node* node1, Node* nod
 
 /*********************** SIMILARITY MEASURES ***********************/
 
-CommonNeighbors::CommonNeighbors() : Projection()
+CommonNeighbors::CommonNeighbors(Graph*& in_graph) : Projection(in_graph)
 {}
 
-float CommonNeighbors::similarity_projection(Graph*& in_graph, unsigned int index1, unsigned int index2)
+float CommonNeighbors::similarity_projection(unsigned int& index1, unsigned int& index2)
 {
 	Node* node1 = in_graph->list_nodes[index1];
 	Node* node2 = in_graph->list_nodes[index2];
 
-	set<Node*> intersection = get_intersection(in_graph, node1, node2);
+	set<Node*> intersection = get_intersection(node1, node2);
 	
 	float projection_weight = 0.0;
 	unsigned int cpt, index;
@@ -142,15 +200,15 @@ float CommonNeighbors::similarity_projection(Graph*& in_graph, unsigned int inde
 	return projection_weight;
 }
 
-JaccardIndex::JaccardIndex() : Projection()
+JaccardIndex::JaccardIndex(Graph*& in_graph) : Projection(in_graph)
 {}
 
-float JaccardIndex::similarity_projection(Graph*& in_graph, unsigned int index1, unsigned int index2)
+float JaccardIndex::similarity_projection(unsigned int& index1, unsigned int& index2)
 {
 	Node* node1 = in_graph->list_nodes[index1];
 	Node* node2 = in_graph->list_nodes[index2];
 
-	set<Node*> intersection = get_intersection(in_graph, node1, node2);
+	set<Node*> intersection = get_intersection(node1, node2);
 	
 	float projection_weight, sum_weight;
 	projection_weight = sum_weight = 0.0;
@@ -181,15 +239,15 @@ float JaccardIndex::similarity_projection(Graph*& in_graph, unsigned int index1,
 	return 1.0 * projection_weight / sum_weight;
 }
 
-AdamicAdar::AdamicAdar() : Projection()
+AdamicAdar::AdamicAdar(Graph*& in_graph) : Projection(in_graph)
 {}
 
-float AdamicAdar::similarity_projection(Graph*& in_graph, unsigned int index1, unsigned int index2)
+float AdamicAdar::similarity_projection(unsigned int& index1, unsigned int& index2)
 {
 	Node* node1 = in_graph->list_nodes[index1];
 	Node* node2 = in_graph->list_nodes[index2];
 
-	set<Node*> intersection = get_intersection(in_graph, node1, node2);
+	set<Node*> intersection = get_intersection(node1, node2);
 	
 	float projection_weight, sum_weight;
 	projection_weight = 0.0;
@@ -205,15 +263,15 @@ float AdamicAdar::similarity_projection(Graph*& in_graph, unsigned int index1, u
 	return projection_weight;
 }
 
-ResourceAllocator::ResourceAllocator() : Projection()
+ResourceAllocator::ResourceAllocator(Graph*& in_graph) : Projection(in_graph)
 {}
 
-float ResourceAllocator::similarity_projection(Graph*& in_graph, unsigned int index1, unsigned int index2)
+float ResourceAllocator::similarity_projection(unsigned int& index1, unsigned int& index2)
 {
 	Node* node1 = in_graph->list_nodes[index1];
 	Node* node2 = in_graph->list_nodes[index2];
 
-	set<Node*> intersection = get_intersection(in_graph, node1, node2);
+	set<Node*> intersection = get_intersection(node1, node2);
 	
 	float projection_weight, sum_weight;
 	projection_weight = 0.0;
@@ -229,15 +287,15 @@ float ResourceAllocator::similarity_projection(Graph*& in_graph, unsigned int in
 	return projection_weight;
 }
 
-LHN1::LHN1() : Projection()
+LHN1::LHN1(Graph*& in_graph) : Projection(in_graph)
 {}
 
-float LHN1::similarity_projection(Graph*& in_graph, unsigned int index1, unsigned int index2)
+float LHN1::similarity_projection(unsigned int& index1, unsigned int& index2)
 {
 	Node* node1 = in_graph->list_nodes[index1];
 	Node* node2 = in_graph->list_nodes[index2];
 
-	set<Node*> intersection = get_intersection(in_graph, node1, node2);
+	set<Node*> intersection = get_intersection(node1, node2);
 	
 	float projection_weight, sum_weight1, sum_weight2;
 	projection_weight = sum_weight1 = sum_weight2 = 0.0;
@@ -268,15 +326,15 @@ float LHN1::similarity_projection(Graph*& in_graph, unsigned int index1, unsigne
 	return 1.0 * projection_weight / (sum_weight1 * sum_weight2);
 }
 
-PA_Neighbor::PA_Neighbor() : Projection()
+PA_Neighbor::PA_Neighbor(Graph*& in_graph) : Projection(in_graph)
 {}
 
-float PA_Neighbor::similarity_projection(Graph*& in_graph, unsigned int index1, unsigned int index2)
+float PA_Neighbor::similarity_projection(unsigned int& index1, unsigned int& index2)
 {
 	Node* node1 = in_graph->list_nodes[index1];
 	Node* node2 = in_graph->list_nodes[index2];
 
-	set<Node*> intersection = get_intersection(in_graph, node1, node2);
+	set<Node*> intersection = get_intersection(node1, node2);
 	
 	float projection_weight, sum_weight;
 	projection_weight = 1.0;

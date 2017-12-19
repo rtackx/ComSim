@@ -10,7 +10,6 @@ private:
 	Graph* main_graph;
 	unsigned int index_community;
 	unsigned int depth_best;
-
 public:
 	unordered_map<unsigned int, vector<unsigned int>> map_community;
 	unordered_map<unsigned int, unordered_map<unsigned int, float>*> map_similar_community;

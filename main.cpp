@@ -48,20 +48,20 @@ void usage()
 	cerr << "\"./comsim uni_network_links 1 cm 3 > detected_communities\" executes ComSim with cn similarity index between nodes at distance 1 on a unipartite network and it allows each node to be part of 3 cycles." << endl;
 }
 
-Projection* select_similarity(string similarity_index)
+Projection* select_similarity(string similarity_index, Graph*& in_graph)
 {
 	if(similarity_index == "cn")
-		return new CommonNeighbors();
+		return new CommonNeighbors(in_graph);
 	else if(similarity_index == "ji")
-		return new JaccardIndex();
+		return new JaccardIndex(in_graph);
 	else if(similarity_index == "aa")
-		return new AdamicAdar();
+		return new AdamicAdar(in_graph);
 	else if(similarity_index == "ra")
-		return new ResourceAllocator();
+		return new ResourceAllocator(in_graph);
 	else if(similarity_index == "lhn")
-		return new LHN1();
+		return new LHN1(in_graph);
 	else if(similarity_index == "pan")
-		return new PA_Neighbor();
+		return new PA_Neighbor(in_graph);
 }
 
 int main(int argc, const char* argv[])
@@ -123,9 +123,9 @@ int main(int argc, const char* argv[])
 
 	g = main_graph;
 		
-	p = select_similarity(similarity_index);
+	p = select_similarity(similarity_index, g);
 	cerr << endl << "Projecting graph (distance : " << distance << ") ..." << endl;
-	p->project(g, distance);
+	p->project(distance);
 
 	if(p->graph_projection->size_list_nodes > 0)
 	{

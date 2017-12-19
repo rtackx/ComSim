@@ -142,8 +142,6 @@ void Community::aggregate(Graph*& graph_projection, unordered_set<unsigned int>&
 			for(auto& index_com : map_community[graph_projection->list_nodes[index+i+1]->index])
 			{
 				map_similar_community_tmp->emplace(make_pair(index_com, 0.0));
-				/*if(map_similar_community_tmp->find(index_com) == map_similar_community_tmp->end())
-				 	map_similar_community_tmp->insert(make_pair(index_com, 0.0));*/
 				map_similar_community_tmp->at(index_com) += node->neighbor_weights[i];
 			}
 		}

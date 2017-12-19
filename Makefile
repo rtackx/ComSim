@@ -4,7 +4,7 @@ NAME = comsim
 all: $(NAME)
 
 $(NAME): node.o main.o graph.o projection.o community.o
-	g++ node.o main.o graph.o projection.o community.o -o $(NAME) $(STD)
+	g++ node.o main.o graph.o projection.o community.o -o $(NAME) $(STD) -lpthread
 
 main.o : main.cpp
 	g++ -c main.cpp $(STD) -O5
