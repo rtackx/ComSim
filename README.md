@@ -1,4 +1,4 @@
-# ComSim
+# ComSim : a community detection algorithm using cycle and node's similarity
 
 ComSim is a community detection algorithm.
 Given a input network a partition of nodes into communities is identified.
