@@ -11,7 +11,7 @@ public:
 	string id;
 
 	unsigned int nb_neighbors;
-	vector<float> neighbor_weights;
+	unordered_map<Node*, float> neighbor_weights;
 	
 	Node();
 	~Node();

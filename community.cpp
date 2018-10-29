@@ -6,62 +6,56 @@ Community::Community(Graph*& main_graph, unsigned int depth_best) : main_graph(m
 }
 
 Community::~Community()
-{
-	for(auto& e : map_similar_community)
-		delete e.second;
-}
+{}
 
-void Community::detect(Graph*& graph_projection, vector<unsigned int>& list_ending_nodes)
+unsigned int Community::detect(Graph*& graph_projection)
 {	
-	vector<unsigned int> list_index_nodes;
+	vector<unsigned int> list_index_nodes, list_ending_nodes;
 	unordered_set<unsigned int> list_remaining_nodes;
 	unsigned int index = 0;
 	
-	while(index < graph_projection->size_list_nodes)
+	while(index < graph_projection->n)
 	{
 		if(graph_projection->list_nodes[index]->nb_neighbors == 0)
 			list_ending_nodes.push_back(graph_projection->list_nodes[index]->main_index);
 		else
 			list_index_nodes.push_back(index);
 
-		index += graph_projection->list_nodes[index]->nb_neighbors + 1;
+		index++;
 	}
 	
 	if(list_index_nodes.size() > 0)
 	{
  		cycles(graph_projection, list_index_nodes, list_remaining_nodes);
-		aggregate(graph_projection, list_remaining_nodes, list_ending_nodes);
+		aggregate(graph_projection, list_remaining_nodes);
 	}
-
+	
 	save_communities(graph_projection);
-	map_community.clear();
+
+	return list_remaining_nodes.size() + list_ending_nodes.size();
 }
 
 void Community::cycles(Graph*& graph_projection, vector<unsigned int>& list_index_nodes, unordered_set<unsigned int>& list_remaining_nodes)
 {
-	vector<unsigned int> list_visited_nodes;	
-
-	unsigned int current, current_tmp, most_similar;
-	vector<unsigned int>::iterator it_current, it_list_visited, it_list_index;
-	vector<unsigned int>* vec_depth;
-
-	unordered_map<unsigned int, vector<unsigned int>*> map_cycle_nodes;
+	vector<unsigned int> list_visited_nodes;
+	unsigned int current, neighbor, most_similar, max_depth;
+	vector<unsigned int>::iterator it_list_visited, it_list_index, it_current;
+	vector<unsigned int>::reverse_iterator rit_current;
+	float max_similarity;
+	vector<unsigned int> list_similarity;
+	
+	unordered_map<unsigned int, pair<unsigned int, unsigned int>> map_cycle_nodes;
 	for(auto& index : list_index_nodes)
 	{
-		map_cycle_nodes[index] = new vector<unsigned int>;
-		vec_depth = map_cycle_nodes[index];
-
+		max_depth = depth_best;
 		if(depth_best > graph_projection->list_nodes[index]->nb_neighbors)
-			vec_depth->push_back(graph_projection->list_nodes[index]->nb_neighbors);
-		else
-			vec_depth->push_back(depth_best);
+			max_depth = graph_projection->list_nodes[index]->nb_neighbors;
 
-		vec_depth->push_back(0);
+		map_cycle_nodes[index] = make_pair(0, max_depth);
 	}
 
 	int i = rand() % list_index_nodes.size();
 	bool new_node = true;
-
 	do 
 	{
 		if(new_node)
@@ -71,101 +65,178 @@ void Community::cycles(Graph*& graph_projection, vector<unsigned int>& list_inde
 			current = list_index_nodes[i];
 			new_node = false;
 		}
-		
+
 		list_visited_nodes.push_back(current);
 
-		most_similar = graph_projection->list_nodes[current+map_cycle_nodes[current]->at(1)+1]->index;
+		max_similarity = 0.0;
+		for(auto& neighbor : graph_projection->list_nodes[current]->neighbor_weights)
+		{
+			if(neighbor.second >= max_similarity)
+			{
+				if(neighbor.second > max_similarity)
+					list_similarity.clear();
 
-		it_list_visited = find(list_visited_nodes.begin(), list_visited_nodes.end(), most_similar);
-		it_list_index = find(list_index_nodes.begin(), list_index_nodes.end(), most_similar);
+				max_similarity = neighbor.second;
+				list_similarity.push_back(neighbor.first->index);
+			}
+		}
+		if(list_visited_nodes.size() > 1)
+		{
+			rit_current = list_visited_nodes.rbegin();
+			while(rit_current != list_visited_nodes.rend())
+			{
+				if(list_similarity.size() > 1 && find(list_similarity.begin(), list_similarity.end(), *rit_current) != list_similarity.end())
+					list_similarity.erase(remove(list_similarity.begin(), list_similarity.end(), *rit_current));
 
+				++rit_current;
+			}
+		}
+
+		if(list_similarity.size() > 0)
+		{
+			most_similar = list_similarity[rand() % list_similarity.size()];
+
+			it_list_visited = find(list_visited_nodes.begin(), list_visited_nodes.end(), most_similar);
+			it_list_index = find(list_index_nodes.begin(), list_index_nodes.end(), most_similar);		
+		}
+		else
+		{
+			it_list_visited = list_visited_nodes.end();
+			it_list_index = list_index_nodes.end();
+		}
+
+		
 		if(it_list_visited == list_visited_nodes.end() && it_list_index != list_index_nodes.end())
 			current = most_similar;
 		else
 		{
+			// Already visited, cycle detected 
 			if(it_list_visited != list_visited_nodes.end())
 			{
-				while(it_list_visited != list_visited_nodes.end())
+				it_current = it_list_visited;
+				while(it_current != list_visited_nodes.end())
 				{
-					map_community[*it_list_visited].push_back(index_community);
-					++it_list_visited;
+					current = *it_current;
+					map_community[current].push_back(index_community);
+										
+					advance(it_current, 1);
+					if(it_current != list_visited_nodes.end())
+						neighbor = *it_current;
+					else
+						neighbor = *it_list_visited;
+
+					graph_projection->list_nodes[current]->neighbor_weights.erase(graph_projection->list_nodes[neighbor]);
+					graph_projection->list_nodes[neighbor]->neighbor_weights.erase(graph_projection->list_nodes[current]);
 				}
 
 				index_community++;
-			}
 
-			for(auto& index : list_visited_nodes)
-			{
-				vec_depth = map_cycle_nodes[index];
-				vec_depth->at(1)++;
-
-				if(vec_depth->at(1) == vec_depth->at(0))
+				it_current = it_list_visited;
+				while(it_current != list_visited_nodes.end())
 				{
-					if(map_community.find(index) == map_community.end())
-					 	list_remaining_nodes.insert(index);
-
-					list_index_nodes.erase(remove(list_index_nodes.begin(), list_index_nodes.end(), index));
+					current = *it_current;
+					map_cycle_nodes[current].first++;
+					if(map_cycle_nodes[current].first == map_cycle_nodes[current].second)
+							list_index_nodes.erase(remove(list_index_nodes.begin(), list_index_nodes.end(), current));
+					
+					++it_current;
 				}
 			}
+			else
+			{
+				for(auto& current : list_visited_nodes)
+				{					
+					map_cycle_nodes[current].first++;
+					if(map_cycle_nodes[current].first == map_cycle_nodes[current].second)
+					{
+						if(map_community.find(current) == map_community.end())
+							list_remaining_nodes.insert(current);
 
+						list_index_nodes.erase(remove(list_index_nodes.begin(), list_index_nodes.end(), current));
+					}
+				}
+			}
+			
 			new_node = true;
 		}
 
 	} while(list_index_nodes.size() > 0);
-
-	for(auto& index : list_index_nodes)
-		delete map_cycle_nodes[index];
 }
 
-void Community::aggregate(Graph*& graph_projection, unordered_set<unsigned int>& list_remaining_nodes, vector<unsigned int>& list_ending_nodes)
+void Community::aggregate(Graph*& graph_projection, unordered_set<unsigned int>& list_remaining_nodes)
 {
-	unordered_map<unsigned int, float>* map_similar_community_tmp;
-	vector<pair<unsigned int, unsigned int>> map_community_tmp;
 	Node* node;
-	unsigned int index_neighbor, i;
-	float max;
-	int most_similar_com;
-
+	unsigned int index_com_similar;
+	float max_similarity;
+	unordered_map<unsigned int, float> map_similar_community;
+	unordered_map<unsigned int, vector<unsigned int>> map_community_tmp;
+	unordered_map<unsigned int, vector<unsigned int>> map_best_similarity;
+	vector<unsigned int> list_similarity;
+	
 	for(auto& index : list_remaining_nodes)
 	{
 		node = graph_projection->list_nodes[index];
 
-		if(map_similar_community.find(node->main_index) == map_similar_community.end())
-			map_similar_community[node->main_index] = new unordered_map<unsigned int, float>();
-		map_similar_community_tmp = map_similar_community[node->main_index];
-
-		for(i=0; i<node->nb_neighbors; i++)
+		max_similarity = 0.0;
+		for(auto& neighbor : node->neighbor_weights)
 		{
-			if(map_community.find(graph_projection->list_nodes[index+i+1]->index) == map_community.end())
-				continue;
-
-			for(auto& index_com : map_community[graph_projection->list_nodes[index+i+1]->index])
+			if(map_community.find(neighbor.first->index) != map_community.end())
+			{	
+				for(auto& index_com : map_community[neighbor.first->index])
+				{
+					map_similar_community.emplace(make_pair(index_com, 0.0));
+					map_similar_community[index_com] += neighbor.second;
+				}
+			}
+			else
 			{
-				map_similar_community_tmp->emplace(make_pair(index_com, 0.0));
-				map_similar_community_tmp->at(index_com) += node->neighbor_weights[i];
+				if(neighbor.second >= max_similarity)
+				{
+					if(neighbor.second > max_similarity)
+						list_similarity.clear();
+
+					max_similarity = neighbor.second;
+					list_similarity.push_back(neighbor.first->index);
+				}
 			}
 		}
 
-		max = 0.0;
-		most_similar_com = -1;
+		max_similarity = 0.0;
+		index_com_similar = -1;
 
-		for(auto& e : *map_similar_community_tmp)
+		for(auto& e : map_similar_community)
 		{
-			if(e.second > max)
+			if(e.second > max_similarity)
 			{
-				max = e.second;
-				most_similar_com = e.first;
+				max_similarity = e.second;
+				index_com_similar = e.first;
 			}
 		}
+		map_similar_community.clear();
 		
-		if(most_similar_com == -1)
-			list_ending_nodes.push_back(graph_projection->list_nodes[index]->main_index);
+		if(index_com_similar == -1)
+			map_best_similarity[list_similarity[rand() % list_similarity.size()]].push_back(index);
 		else
-			map_community_tmp.push_back(make_pair(index, most_similar_com));
+		{
+			map_community_tmp[index].push_back(index_com_similar);
+			
+			// Add neighors of "index" into community
+			if(map_best_similarity.find(index) != map_best_similarity.end())
+			{
+				for(auto& index_neighbor : map_best_similarity[index])
+					map_community_tmp[index_neighbor].push_back(index_com_similar);
+			}
+		}
 	}
 	
+	// Saving modification
 	for(auto& e : map_community_tmp)
-		map_community[e.first].push_back(e.second);
+	{
+		for(auto& index_com : e.second)
+			map_community[e.first].push_back(index_com);
+
+		list_remaining_nodes.erase(e.first);
+	}
 }
 
 void Community::save_communities(Graph*& graph_projection)

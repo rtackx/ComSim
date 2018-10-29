@@ -4,7 +4,6 @@ Graph::Graph()
 {
 	n = 0;
 	m = 0;
-	size_list_nodes = 0;
 	list_nodes = NULL;
 }
 
@@ -13,11 +12,11 @@ Graph::~Graph()
 	unsigned int index, nb;
 
 	index = 0;
-	while(index < size_list_nodes)
+	while(index < n)
 	{
 		nb = list_nodes[index]->nb_neighbors;
 		delete list_nodes[index];
-		index += nb + 1;		
+		index++;		
 	}
 
 	if(list_nodes)
@@ -137,14 +136,12 @@ void Graph::create_graph(unordered_map<unsigned int, Node*>& map_node, unordered
 {
 	Node* node;
 	unsigned int index;
-	float weight;
 
 	n = map_node.size();
 	for(auto& e : map_neighbor)
 		m += e.second.size();
 
-	size_list_nodes = n + (m);
-	list_nodes = new Node*[size_list_nodes];
+	list_nodes = new Node*[n];
 	
 	index = 0;
 	for(auto& e : map_node)
@@ -158,18 +155,13 @@ void Graph::create_graph(unordered_map<unsigned int, Node*>& map_node, unordered
 		
 		list_nodes[index] = node;
 		index++;
-
-		weight = 0.0;
+		
 		for(auto& d : map_neighbor[e.first])
-		{
-			node->neighbor_weights.push_back(d.second);
-			list_nodes[index] = map_node[d.first];
-			index++;
-		}
+			node->neighbor_weights[map_node[d.first]] = d.second;
 	}
 }
 
-Graph* Graph::get_subgraph(vector<unsigned int>& list_ending_nodes) const
+/*Graph* Graph::get_subgraph(vector<unsigned int>& list_ending_nodes) const
 {
 	Graph* new_graph = NULL;
 
@@ -216,4 +208,4 @@ Graph* Graph::get_subgraph(vector<unsigned int>& list_ending_nodes) const
 	}
 
 	return new_graph;
-}
+}*/

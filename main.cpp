@@ -119,7 +119,7 @@ int main(int argc, const char* argv[])
 	Community* c = new Community(main_graph, depth_best);
 	Projection* p;
 	Graph* g;
-	vector<unsigned int> list_ending_nodes;
+	unsigned int nb_remaining_nodes = 0;
 
 	g = main_graph;
 		
@@ -127,14 +127,14 @@ int main(int argc, const char* argv[])
 	cerr << endl << "Projecting graph (distance : " << distance << ") ..." << endl;
 	p->project(distance);
 
-	if(p->graph_projection->size_list_nodes > 0)
+	if(p->graph_projection->n > 0)
 	{
 		cerr << "Detecting communities..." << endl;
-		c->detect(p->graph_projection, list_ending_nodes);
+		nb_remaining_nodes = c->detect(p->graph_projection);
 
 		//g = main_graph->get_subgraph(list_ending_nodes);
 	}
-	cerr << "Number of remaining nodes : " << list_ending_nodes.size() << endl;
+	cerr << "Number of remaining nodes : " << nb_remaining_nodes << endl;
 
 	cerr << endl << "--------------" << endl;
 	unsigned int i;

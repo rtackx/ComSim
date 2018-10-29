@@ -11,7 +11,6 @@ public:
 	unsigned int m;
 
 	Node** list_nodes;
-	unsigned int size_list_nodes;
 
 	Graph();
 	~Graph();

@@ -12,7 +12,7 @@ public:
 	Graph* in_graph;
 	vector<Node*> get_neighbors(unsigned int&, unsigned int&) const;
 	set<Node*> get_intersection(Node*&, Node*&) const;
-	virtual float similarity_projection(unsigned int&, unsigned int&)=0;
+	virtual float similarity_projection(Node*&, Node*&)=0;
 
 	Graph* graph_projection;
 	
@@ -39,7 +39,7 @@ typedef struct
 class CommonNeighbors : public Projection
 {
 protected:
-	float similarity_projection(unsigned int&, unsigned int&);
+	float similarity_projection(Node*&, Node*&);
 public:
 	CommonNeighbors(Graph*&);
 };
@@ -47,7 +47,7 @@ public:
 class JaccardIndex : public Projection
 {
 protected:
-	float similarity_projection(unsigned int&, unsigned int&);
+	float similarity_projection(Node*&, Node*&);
 public:
 	JaccardIndex(Graph*&);
 };
@@ -55,7 +55,7 @@ public:
 class AdamicAdar : public Projection
 {
 protected:
-	float similarity_projection(unsigned int&, unsigned int&);
+	float similarity_projection(Node*&, Node*&);
 public:
 	AdamicAdar(Graph*&);
 };
@@ -63,7 +63,7 @@ public:
 class ResourceAllocator : public Projection
 {
 protected:
-	float similarity_projection(unsigned int&, unsigned int&);
+	float similarity_projection(Node*&, Node*&);
 public:
 	ResourceAllocator(Graph*&);
 };
@@ -71,7 +71,7 @@ public:
 class LHN1 : public Projection
 {
 protected:
-	float similarity_projection(unsigned int&, unsigned int&);
+	float similarity_projection(Node*&, Node*&);
 public:
 	LHN1(Graph*&);
 };
@@ -79,7 +79,7 @@ public:
 class PA_Neighbor : public Projection
 {
 protected:
-	float similarity_projection(unsigned int&, unsigned int&);
+	float similarity_projection(Node*&, Node*&);
 public:
 	PA_Neighbor(Graph*&);
 };
