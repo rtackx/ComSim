@@ -39,7 +39,7 @@ void usage()
 	cerr << "A depth value can be chosen (default is 1). This value indicates how many cycles a node can be part of." << endl;
 	cerr << "Choosing a depth value > 1 produces overlapping between communities." << endl << endl;
 
-	cerr << "link_list_file : input network as a list of links" << endl; 
+	cerr << "link_list_file : input network as a list of links" << endl;
 	cerr << "A link is : \nnode1 node2 [weight]" << endl << endl;
 
 	cerr << "ComSim examples :" << endl;
@@ -62,6 +62,8 @@ Projection* select_similarity(string similarity_index, Graph*& in_graph)
 		return new LHN1(in_graph);
 	else if(similarity_index == "pan")
 		return new PA_Neighbor(in_graph);
+
+  return NULL;
 }
 
 int main(int argc, const char* argv[])
@@ -87,7 +89,7 @@ int main(int argc, const char* argv[])
 			similarity_index = argv[3];
 
 			if(list_valid_similarities.find(similarity_index) == list_valid_similarities.end())
-			{				
+			{
 				usage();
 				cerr << endl << "\"" << similarity_index << "\" is not a valid similarity index" << endl;
 				return 0;
@@ -102,18 +104,18 @@ int main(int argc, const char* argv[])
 					usage();
 					return 0;
 				}
-			}			
+			}
 		}
 	}
 
 	high_resolution_clock::time_point t1, t2;
 	t1 = high_resolution_clock::now();
-	
+
 	Graph* main_graph = new Graph();
 	cerr << "Loading graph..." << endl;
 	main_graph->load_graph(path_dataset);
 	cerr << "   n = " << main_graph->n << endl << "   m = " << main_graph->m/2 << endl;
-	
+
 	srand(unsigned(time(NULL)));
 
 	Community* c = new Community(main_graph, depth_best);
@@ -122,7 +124,7 @@ int main(int argc, const char* argv[])
 	unsigned int nb_remaining_nodes = 0;
 
 	g = main_graph;
-		
+
 	p = select_similarity(similarity_index, g);
 	cerr << endl << "Projecting graph (distance : " << distance << ") ..." << endl;
 	p->project(distance);
@@ -145,12 +147,12 @@ int main(int argc, const char* argv[])
 		cout << e.second[e.second.size()-1]->id << endl;
 	}
 	cerr << "--------------" << endl;
-	
+
 	delete p;
 	delete g;
 	//delete main_graph;
 	delete c;
-	
+
 	t2 = high_resolution_clock::now();
 	cerr << "Time : ";
 	display_ms(t1, t2);
